@@ -1,0 +1,421 @@
+// ฐานข้อมูลระบบบริหารจัดการธุรกิจขนส่งรถบรรทุก
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===============================
+// ผู้ใช้งานระบบ
+// ===============================
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique // ชื่อผู้ใช้สำหรับ login
+  password  String
+  name      String   // ชื่อจริง
+  phone     String?
+  role      UserRole @default(CLERK)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  approvedExpenses Expense[] @relation("ApprovedExpenses")
+  createdJobs      Job[]     @relation("CreatedJobs")
+
+  @@map("users")
+}
+
+// ===============================
+// สิทธิ์การเข้าถึง
+// ===============================
+model Permission {
+  id          String   @id @default(cuid())
+  code        String   @unique // เช่น "jobs", "trucks"
+  name        String   // เช่น "จัดการงานขนส่ง"
+  description String?  // รายละเอียด
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  role         UserRole
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  @@unique([role, permissionId])
+  @@map("role_permissions")
+}
+
+enum UserRole {
+  OWNER      // เจ้าของกิจการ
+  MANAGER    // ผู้จัดการขนส่ง
+  CLERK      // เสมียน
+  ACCOUNTANT // ฝ่ายบัญชี
+  DRIVER     // คนขับรถ
+}
+
+// ===============================
+// ข้อมูลลูกค้า
+// ===============================
+model Customer {
+  id          String   @id @default(cuid())
+  code        String   @unique // รหัสลูกค้า
+  name        String   // ชื่อ/บริษัท
+  contactName String?  // ชื่อผู้ติดต่อ
+  phone       String?
+  email       String?
+  address     String?
+  taxId       String?  // เลขประจำตัวผู้เสียภาษี
+  creditDays  Int      @default(30) // เครดิต (วัน)
+  creditLimit Decimal  @default(0) @db.Decimal(12, 2) // วงเงินเครดิต
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs     Job[]
+  invoices Invoice[]
+
+  @@map("customers")
+}
+
+// ===============================
+// ข้อมูลรถบรรทุก
+// ===============================
+model Truck {
+  id               String      @id @default(cuid())
+  licensePlate     String      @unique // ทะเบียนรถ
+  truckType        TruckType   // ประเภทรถ
+  brand            String      // ยี่ห้อ
+  model            String      // รุ่น
+  year             Int         // ปีที่ซื้อ
+  color            String?
+  engineNo         String?     // เลขเครื่อง
+  chassisNo        String?     // เลขตัวถัง
+  taxExpiry        DateTime?   // วันที่ต่อภาษี
+  actExpiry        DateTime?   // วันที่ต่อ พ.ร.บ. (พระราชบัญญัติ)
+  insuranceExpiry  DateTime?   // วันที่ต่อประกัน
+  insuranceCompany String?     // บริษัทประกัน
+  status           TruckStatus @default(ACTIVE)
+  note             String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  driver       Driver?      @relation(fields: [driverId], references: [id])
+  driverId     String?
+  jobs         Job[]
+  fuelLogs     FuelLog[]
+  maintenances Maintenance[]
+  expenses     Expense[]
+
+  @@map("trucks")
+}
+
+enum TruckType {
+  SMALL_TRUCK    // รถเล็ก (4 ล้อ)
+  MEDIUM_TRUCK   // รถกลาง (6 ล้อ)
+  LARGE_TRUCK    // รถใหญ่ (10 ล้อ)
+  TRAILER        // รถพ่วง
+  REFRIGERATOR   // รถห้องเย็น
+  CRANE_TRUCK    // รถเครน
+  TANKER         // รถบรรทุกน้ำมัน
+}
+
+enum TruckStatus {
+  ACTIVE      // ใช้งานได้
+  IN_USE      // กำลังใช้งาน
+  MAINTENANCE // ซ่อมบำรุง
+  INACTIVE    // ไม่ได้ใช้งาน
+}
+
+// ===============================
+// ข้อมูลคนขับรถ
+// ===============================
+model Driver {
+  id              String       @id @default(cuid())
+  code            String       @unique // รหัสพนักงาน
+  firstName       String
+  lastName        String
+  phone           String
+  idCardNo        String       @unique // เลขบัตรประชาชน
+  licenseNo       String       // เลขใบขับขี่
+  licenseType     LicenseType  // ประเภทใบขับขี่
+  licenseExpiry   DateTime     // วันหมดอายุใบขับขี่
+  address         String?
+  emergencyPhone  String?      // เบอร์ฉุกเฉิน
+  salary          Decimal?     @db.Decimal(10, 2)
+  startDate       DateTime     // วันเริ่มงาน
+  status          DriverStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  trucks   Truck[]
+  jobs     Job[]
+  expenses Expense[]
+
+  @@map("drivers")
+}
+
+enum LicenseType {
+  TYPE_2    // ประเภท 2 (รถยนต์)
+  TYPE_3    // ประเภท 3 (รถบรรทุก)
+  TYPE_4    // ประเภท 4 (รถบรรทุกขนาดใหญ่)
+}
+
+enum DriverStatus {
+  ACTIVE   // ปฏิบัติงาน
+  ON_LEAVE // ลางาน
+  INACTIVE // พ้นสภาพ
+}
+
+// ===============================
+// งานขนส่ง
+// ===============================
+model Job {
+  id              String    @id @default(cuid())
+  jobNo           String    @unique // เลขที่งาน
+  receivedDate    DateTime  // วันที่รับงาน
+  deliveryDate    DateTime? // วันที่ส่งงาน
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  customerId      String
+  originAddress   String    // จุดรับสินค้า
+  destAddress     String    // จุดส่งสินค้า
+  originProvince  String?   // จังหวัดต้นทาง
+  destProvince    String?   // จังหวัดปลายทาง
+  distance        Decimal?  @db.Decimal(8, 2) // ระยะทาง (กม.)
+  cargoType       String    // ประเภทสินค้า
+  cargoWeight     Decimal?  @db.Decimal(10, 2) // น้ำหนักสินค้า (กก.)
+  cargoUnit       String?   @default("กิโลกรัม")
+  price           Decimal   @db.Decimal(12, 2) // ราคาค่าขนส่ง
+  additionalCost  Decimal   @default(0) @db.Decimal(10, 2) // ค่าใช้จ่ายเพิ่มเติม
+  truck           Truck?    @relation(fields: [truckId], references: [id])
+  truckId         String?
+  driver          Driver?   @relation(fields: [driverId], references: [id])
+  driverId        String?
+  status          JobStatus @default(PENDING)
+  note            String?
+  createdBy       User      @relation("CreatedJobs", fields: [createdById], references: [id])
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  expenses    Expense[]
+  invoiceItems InvoiceItem[]
+
+  @@map("jobs")
+}
+
+enum JobStatus {
+  PENDING       // รอรับงาน
+  WAITING_TRUCK // รอจัดรถ
+  IN_TRANSIT    // กำลังขนส่ง
+  DELIVERED     // ส่งงานแล้ว
+  INVOICED      // วางบิลแล้ว
+  PAID          // รับเงินแล้ว
+  CANCELLED     // ยกเลิก
+}
+
+// ===============================
+// ค่าใช้จ่าย
+// ===============================
+model Expense {
+  id           String        @id @default(cuid())
+  expenseDate  DateTime      // วันที่เกิดค่าใช้จ่าย
+  type         ExpenseType   // ประเภทค่าใช้จ่าย
+  amount       Decimal       @db.Decimal(10, 2)
+  description  String?       // รายละเอียด
+  truck        Truck?        @relation(fields: [truckId], references: [id])
+  truckId      String?
+  driver       Driver?       @relation(fields: [driverId], references: [id])
+  driverId     String?
+  job          Job?          @relation(fields: [jobId], references: [id])
+  jobId        String?
+  status       ExpenseStatus @default(PENDING)
+  receiptImage String?       // รูปใบเสร็จ
+  approvedBy   User?         @relation("ApprovedExpenses", fields: [approvedById], references: [id])
+  approvedById String?
+  approvedAt   DateTime?
+  rejectReason String?
+  note         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("expenses")
+}
+
+enum ExpenseType {
+  FUEL         // ค่าน้ำมัน
+  TOLL         // ค่าทางด่วน
+  REPAIR       // ค่าซ่อมรถ
+  TIRE         // ค่าปะยาง/เปลี่ยนยาง
+  ACCOMMODATION // ค่าที่พัก
+  FOOD         // ค่าอาหาร
+  LOADING      // ค่าขึ้น-ลงสินค้า
+  OTHER        // ค่าใช้จ่ายอื่น
+}
+
+enum ExpenseStatus {
+  PENDING   // รออนุมัติ
+  APPROVED  // อนุมัติแล้ว
+  REJECTED  // ไม่อนุมัติ
+}
+
+// ===============================
+// บันทึกน้ำมัน
+// ===============================
+model FuelLog {
+  id          String   @id @default(cuid())
+  logDate     DateTime // วันที่เติม
+  truck       Truck    @relation(fields: [truckId], references: [id])
+  truckId     String
+  liters      Decimal  @db.Decimal(8, 2) // จำนวนลิตร
+  amount      Decimal  @db.Decimal(10, 2) // จำนวนเงิน
+  pricePerLit Decimal  @db.Decimal(6, 2)  // ราคาต่อลิตร
+  odometer    Int?     // เลขไมล์
+  station     String?  // ปั๊มน้ำมัน
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("fuel_logs")
+}
+
+// ===============================
+// ประวัติการซ่อมบำรุง
+// ===============================
+model Maintenance {
+  id            String          @id @default(cuid())
+  maintenanceDate DateTime      // วันที่ซ่อม
+  truck         Truck           @relation(fields: [truckId], references: [id])
+  truckId       String
+  type          MaintenanceType // ประเภทการซ่อม
+  description   String          // รายการซ่อม
+  cost          Decimal         @db.Decimal(10, 2) // ค่าใช้จ่าย
+  garage        String?         // อู่ซ่อม
+  odometer      Int?            // เลขไมล์ที่ซ่อม
+  nextOdometer  Int?            // เลขไมล์ครั้งถัดไป
+  nextDate      DateTime?       // วันนัดซ่อมครั้งถัดไป
+  note          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("maintenances")
+}
+
+enum MaintenanceType {
+  OIL_CHANGE    // เปลี่ยนน้ำมันเครื่อง
+  TIRE_CHANGE   // เปลี่ยนยาง
+  INSPECTION    // ตรวจสภาพ
+  BRAKE         // ซ่อมเบรก
+  ENGINE        // ซ่อมเครื่องยนต์
+  ELECTRICAL    // ระบบไฟฟ้า
+  BODY          // ซ่อมตัวถัง
+  PREVENTIVE    // บำรุงรักษาตามกำหนด
+  OTHER         // อื่นๆ
+}
+
+// ===============================
+// ใบแจ้งหนี้
+// ===============================
+model Invoice {
+  id          String        @id @default(cuid())
+  invoiceNo   String        @unique // เลขที่ใบแจ้งหนี้
+  invoiceDate DateTime      // วันที่ออกใบแจ้งหนี้
+  dueDate     DateTime      // วันครบกำหนด
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  customerId  String
+  subtotal    Decimal       @db.Decimal(12, 2) // ยอดก่อน VAT
+  vatRate     Decimal       @default(7) @db.Decimal(4, 2)
+  vatAmount   Decimal       @db.Decimal(12, 2) // VAT
+  totalAmount Decimal       @db.Decimal(12, 2) // ยอดรวม
+  paidAmount  Decimal       @default(0) @db.Decimal(12, 2) // ยอดที่ชำระแล้ว
+  status      InvoiceStatus @default(UNPAID)
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId   String
+  job         Job?     @relation(fields: [jobId], references: [id])
+  jobId       String?
+  description String
+  quantity    Decimal  @db.Decimal(8, 2)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+
+  @@map("invoice_items")
+}
+
+enum InvoiceStatus {
+  UNPAID       // ยังไม่ชำระ
+  PARTIAL      // ชำระบางส่วน
+  PAID         // ชำระแล้ว
+  OVERDUE      // เกินกำหนด
+  CANCELLED    // ยกเลิก
+}
+
+// ===============================
+// การรับชำระเงิน
+// ===============================
+model Payment {
+  id            String      @id @default(cuid())
+  paymentDate   DateTime    // วันที่รับชำระ
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id])
+  invoiceId     String
+  amount        Decimal     @db.Decimal(12, 2)
+  method        PaymentMethod
+  referenceNo   String?     // เลขอ้างอิง
+  note          String?
+  createdAt     DateTime    @default(now())
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CASH         // เงินสด
+  TRANSFER     // โอนเงิน
+  CHEQUE       // เช็ค
+  CREDIT_CARD  // บัตรเครดิต
+}
+
+// ===============================
+// การแจ้งเตือน
+// ===============================
+model Alert {
+  id        String    @id @default(cuid())
+  type      AlertType
+  message   String
+  relatedId String?   // ID ของข้อมูลที่เกี่ยวข้อง
+  isRead    Boolean   @default(false)
+  dueDate   DateTime? // วันที่หมดอายุ
+  createdAt DateTime  @default(now())
+
+  @@map("alerts")
+}
+
+enum AlertType {
+  TAX_EXPIRY         // ภาษีใกล้หมดอายุ
+  ACT_EXPIRY         // พ.ร.บ.ใกล้หมดอายุ
+  INSURANCE_EXPIRY   // ประกันใกล้หมดอายุ
+  LICENSE_EXPIRY     // ใบขับขี่ใกล้หมดอายุ
+  MAINTENANCE_DUE    // ถึงเวลาซ่อมบำรุง
+  OVERDUE_INVOICE    // ใบแจ้งหนี้เกินกำหนด
+  HIGH_FUEL_USAGE    // การใช้น้ำมันผิดปกติ
+}
