@@ -1,0 +1,81 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║           🚀 TMS THAILAND - QUICK DEPLOYMENT REFERENCE                    ║
+║                                                                            ║
+║                      ทำให้เสร็จใน 5 นาที                                    ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📌 STEP 1: SUPABASE (1 นาที)
+─────────────────────────────────────────────────────────────────────────────
+1. ไป https://supabase.com → Sign up
+2. Create Project → Name: tms-thailand, Region: Singapore
+3. Settings → Database → Copy PostgreSQL Connection String
+4. ⚠️ SAVE CONNECTION STRING!
+
+📌 STEP 2: GITHUB (1 นาที)
+─────────────────────────────────────────────────────────────────────────────
+1. ไป https://github.com → New Repository
+2. Name: tms-thailand
+3. ใน terminal เครื่องตัวเอง:
+   $ git remote add origin https://github.com/YOUR_USERNAME/tms-thailand.git
+   $ git push -u origin main
+
+📌 STEP 3: VERCEL (2 นาที)
+─────────────────────────────────────────────────────────────────────────────
+1. ไป https://vercel.com → Sign in with GitHub
+2. Import Project → เลือก tms-thailand
+3. Add Environment Variables:
+   - DATABASE_URL = (จาก Supabase)
+   - NEXTAUTH_URL = https://tms-thailand.vercel.app
+   - NEXTAUTH_SECRET = (generate)
+4. Click Deploy → รอ build เสร็จ
+
+📌 STEP 4: DATABASE SETUP (1 นาที)
+─────────────────────────────────────────────────────────────────────────────
+ใน terminal:
+$ npx prisma migrate deploy
+$ npm run db:seed
+
+✅ DONE! ไปที่ https://tms-thailand.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 DEFAULT LOGIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Username: admin          | Password: password123
+Username: manager01      | Password: password123
+Username: sompong        | Password: password123
+Username: accountant01   | Password: password123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 WHAT'S INCLUDED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Insurance & Tax Management (พ.ร.บ. + ประกัน)
+✓ Job Management (งานขนส่ง)
+✓ Truck Management (จัดการรถ)
+✓ Driver Management (จัดการคนขับ)
+✓ Document Storage (เก็บเอกสาร)
+✓ Settings with Role-Based Access Control
+✓ Permission Toggle Switches
+✓ User Management
+✓ Full API Integration
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 COST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Vercel:    🆓 FREE (generous free tier)
+Supabase:  🆓 FREE (500MB database + 2GB storage)
+TOTAL:     🆓 ฟรี ✨
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• DEPLOY_STEPS.md     → ขั้นตอนละเอียด (read this first!)
+• DEPLOYMENT.md       → Troubleshooting & setup
+• package.json        → Available npm scripts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❓ NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+อ่าน DEPLOY_STEPS.md ให้ครบ ตามขั้นตอนทีละ step
+ถ้าติดปัญหา ให้ error message มา ผมจะแก้ให้!
