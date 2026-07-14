@@ -15,6 +15,7 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   username  String   @unique // ชื่อผู้ใช้สำหรับ login
+  email     String?  @unique
   password  String
   name      String   // ชื่อจริง
   phone     String?
