@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Compress
-    let compressedBuffer = Buffer.from(await file.arrayBuffer())
+    let compressedBuffer = Buffer.from(await file.arrayBuffer() as ArrayBuffer)
     if (file.type.includes('image')) {
       compressedBuffer = await compressImage(compressedBuffer, file.type)
     }
