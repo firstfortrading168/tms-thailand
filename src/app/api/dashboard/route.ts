@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const today = new Date()
   const startMonth = startOfMonth(today)

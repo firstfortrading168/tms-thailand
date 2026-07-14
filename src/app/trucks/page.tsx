@@ -9,6 +9,10 @@ import { Plus, Search, AlertTriangle, Edit, Trash2, Info, X } from 'lucide-react
 import { formatThaiDate, daysUntil, getExpiryColor } from '@/lib/utils'
 import { TRUCK_TYPE_LABELS, TRUCK_STATUS_LABELS, TRUCK_STATUS_COLORS } from '@/lib/constants'
 
+import { Suspense } from 'react'
+
+export const dynamic = 'force-dynamic'
+
 const mockTrucks = [
   {
     id: '1', licensePlate: 'กข-1234', truckType: 'LARGE_TRUCK', brand: 'HINO', model: 'FM8JMSA',
@@ -60,7 +64,7 @@ const statusTabs = [
   { value: 'INACTIVE',    label: 'ไม่ใช้งาน',   color: 'bg-slate-100 text-slate-500' },
 ]
 
-export default function TrucksPage() {
+function TrucksPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -485,5 +489,13 @@ export default function TrucksPage() {
         </div>
       )}
     </AppShell>
+  )
+}
+
+export default function TrucksPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrucksPageContent />
+    </Suspense>
   )
 }

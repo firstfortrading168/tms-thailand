@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { addDays } from 'date-fns'
 import { ALERT_DAYS } from '@/lib/constants'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const today = new Date()
   const alerts: Array<{

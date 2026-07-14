@@ -27,7 +27,7 @@ export default function AppShell({ children, title, subtitle, userName, userRole
       )}>
         <Sidebar
           userName={userName}
-          userRole={userRole}
+          userRole={userRole as any}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         />

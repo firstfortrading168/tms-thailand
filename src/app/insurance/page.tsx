@@ -427,9 +427,8 @@ export default function InsurancePage() {
         )}
 
         {/* Modal */}
-        <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+        <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="ยืนยันการต่ออายุ">
           <div className="w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">ยืนยันการต่ออายุ</h2>
 
             {selectedRenewal && (
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
